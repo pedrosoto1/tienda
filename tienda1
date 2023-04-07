@@ -1,0 +1,610 @@
+package colibri;
+import javax.swing.*;
+import java.sql.*;
+
+public class Prueba extends JFrame {
+    private final String url = "jdbc:mysql://127.0.0.1:3306/?user=root";
+    private final String user = "root";
+    private final String password = "root";
+    private final String databaseName = "tienda_ceramica";
+    private Connection conn;
+
+    public Prueba() {
+        // Configuramos la ventana
+        setTitle("Tienda de Cerámica");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Creamos la ventana de inicio de sesión
+        JPanel loginPanel = new JPanel();
+        JTextField userField = new JTextField(10);
+        JPasswordField passwordField = new JPasswordField(10);
+        loginPanel.add(new JLabel("Usuario:"));
+        loginPanel.add(userField);
+        loginPanel.add(Box.createHorizontalStrut(15));
+        loginPanel.add(new JLabel("Contraseña:"));
+        loginPanel.add(passwordField);
+        int option = JOptionPane.showConfirmDialog(this, loginPanel, "Inicio de sesión", JOptionPane.OK_CANCEL_OPTION);
+        if (option != JOptionPane.OK_OPTION) {
+            System.exit(0);
+        }
+        String user = userField.getText();
+        String password = String.valueOf(passwordField.getPassword());
+        
+        // Conectamos a la base de datos
+        try {
+            conn = DriverManager.getConnection(url, user, password);
+
+            // Creamos la base de datos y la tabla
+            Statement stmt = conn.createStatement();
+            stmt.execute("CREATE DATABASE IF NOT EXISTS " + databaseName);
+            stmt.execute("USE " + databaseName);
+
+            // Creamos el menú y las tablas correspondientes
+            JMenuBar menuBar = new JMenuBar();
+            JMenu menu = new JMenu("Menú");
+
+            JMenuItem menuItemcompras = new JMenuItem("Modulo Compras");
+            menuItemcompras.addActionListener(e -> mostrarMenuSecundario("compras"));
+            menu.add(menuItemcompras);
+            stmt.execute("CREATE TABLE IF NOT EXISTS compras (ID_COMPRA INT, ID_PROVEEDOR INT, " +
+                        "CONCEPTO_COMPRA VARCHAR(50), PRECIO_TOTAL INT, ID_PRODUCTO INT, FECHA_COMPRA INT, ID_FACTURA INT)");	
+
+            JMenuItem menuItemventas = new JMenuItem("Modulo Ventas");
+            menuItemventas.addActionListener(e -> mostrarmenuventas("ventas"));
+            menu.add(menuItemventas);
+            stmt.execute("CREATE TABLE IF NOT EXISTS ventas (ID_VENTA INT, ID_CLIENTE INT, " +
+                    "CONCEPTO_VENTA VARCHAR(50), PRECIO_TOTAL INT, ID_PRODUCTO INT, FECHA_VENTA INT, ID_FACTURA INT)");
+
+            JMenuItem menuItemestudiantes = new JMenuItem("Modulo estudiantes");
+            menuItemestudiantes.addActionListener(e -> mostrarMenuestudiantes("estudiantes"));
+            menu.add(menuItemestudiantes);
+            stmt.execute("CREATE TABLE IF NOT EXISTS estudiantes (ID_ALUMNO INT, NOMBRE_ALUMNO VARCHAR(50), " +
+                        "APELLIDO_PATERNO VARCHAR(50), APELLIDO_MATERNO VARCHAR(50), FECHA_NACIMIENTO VARCHAR(50), MATERIA VARCHAR(20), PAGO_COLEGIATURA VARCHAR(50))");
+
+            JMenuItem menuItemproductos = new JMenuItem("Modulo productos");
+            menuItemproductos.addActionListener(e -> mostrarMenuproductos("productos"));
+            menu.add(menuItemproductos);
+            stmt.execute("CREATE TABLE IF NOT EXISTS productos (ID_PRODUCTO INT, NOMBRE_PRODUCTO VARCHAR(50), " +
+                        "EXISTENCIA VARCHAR(200), FECHA_COMPRA INT, FECHA_VENTA INT)");
+
+        JMenuItem menuItemproveedores = new JMenuItem("Modulo proveedores");
+        menuItemproveedores.addActionListener(e -> mostrarMenuproveedores("proveedores"));
+        menu.add(menuItemproveedores);
+	  stmt.execute("CREATE TABLE IF NOT EXISTS proveedores (ID_PROVEEDOR INT, ID_FACTURA INT, " + "NOMBRE_PROVEEDOR VARCHAR(50), ID_PRODUCTO VARCHAR(20), COMPAÑIA VARCHAR(50), MONTO_TOTAL INT, SUPERVISOR VARCHAR(50))");
+
+        JMenuItem menuIteminventario = new JMenuItem("Modulo inventario");
+        menuIteminventario.addActionListener(e -> mostrarMenuinventario("inventario"));
+        menu.add(menuIteminventario);
+	  stmt.execute("CREATE TABLE IF NOT EXISTS inventario (ID_INVENTARIO INT, ID_PRODUCTO INT, FECHA_INVENTARIO INT FECHA_COMPRA VARCHAR(50), " +
+                        "FECHA_VENTA VARCHAR(50), EXISTENCIA INT, STOCK_MINIMO INT, STOCK_MAXIMO INT)");
+
+        JMenuItem menuItemcontabilidad = new JMenuItem("Modulo contabilidad");
+        menuItemcontabilidad.addActionListener(e -> mostrarMenucontabilidad("contabilidad"));
+        menu.add(menuItemcontabilidad);
+        stmt.execute("CREATE TABLE IF NOT EXISTS contabilidad (ID_CONTABLE INT, RAZON_SOCIAL VARCHAR(50), " +
+                        "ID_FACTURA INT, CONCEPTO VARCHAR(50), TOTAL_IMPUESTO INT, PRECIO_ISR INT, PRECIO_IVA INT, MONTO_TOTAL INT)");
+
+        JMenuItem menuItemfacturacion = new JMenuItem("Modulo facturación");
+        menuItemfacturacion.addActionListener(e -> mostrarMenufactura("facturacion"));
+        menu.add(menuItemfacturacion);
+	  stmt.execute("CREATE TABLE IF NOT EXISTS facturacion (ID_FACTURA INT, " +
+                        "CONCEPTO_FACTURA VARCHAR(50))");
+
+        menuBar.add(menu);
+        setJMenuBar(menuBar);
+
+        // Mostramos la ventana
+        setVisible(true);
+    }
+
+    private void mostrarMenuSecundario(String opcion) {
+        // Creamos la ventana secundaria
+        JFrame modulocompras = new JFrame("Modulo de Compras");
+        modulocompras.setSize(600, 400);
+        modulocompras.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Creamos los componentes
+        JLabel label1 = new JLabel("ID COMPRAS:");
+        JTextField textField1 = new JTextField(10);
+        JLabel label2 = new JLabel("ID PROVEEDOR:");
+        JTextField textField2 = new JTextField(10);
+        JLabel label3 = new JLabel("CONCEPTO DE LA COMPRA:");
+        JTextField textField3 = new JTextField(10);
+        JLabel label4 = new JLabel("PRECIO TOTAL:");
+        JTextField textField4 = new JTextField(10);
+        JLabel label5 = new JLabel("ID FACTURA:");
+        JTextField textField5 = new JTextField(10);
+        JLabel label6 = new JLabel("ID PRODUCTO:");
+        JTextField textField6 = new JTextField(10);
+        JLabel label7 = new JLabel("FECHA DE LA COMPRA:");
+        JTextField textField7 = new JTextField(10);
+        JButton guardarButton = new JButton("Guardar");
+        guardarButton.addActionListener(e -> guardarDatos1(textField1.getText(), textField2.getText(),
+                textField3.getText(), textField4.getText(), textField5.getText(), textField6.getText(), textField7.getText()));
+        JButton volverButton = new JButton("Volver");
+        volverButton.addActionListener(e -> modulocompras.dispose());
+
+        // Creamos el panel y agregamos los componentes
+        JPanel panel = new JPanel();
+        panel.add(label1);
+        panel.add(textField1);
+        panel.add(label2);
+        panel.add(textField2);
+        panel.add(label3);
+        panel.add(textField3);
+        panel.add(label4);
+        panel.add(textField4);
+        panel.add(label5);
+        panel.add(textField5);
+        panel.add(label6);
+        panel.add(textField6);
+        panel.add(label7);
+        panel.add(textField7);
+        panel.add(guardarButton);
+        panel.add(volverButton);
+        modulocompras.add(panel);
+
+        // Mostramos la ventana
+        modulocompras.setVisible(true);
+    }
+
+    private void guardarDatos1(String ID_COMPRA, String ID_PROVEEDOR, String CONCEPTO_COMPRA, String PRECIO_TOTAL, String ID_PRODUCTO, String ID_FACTURA, String FECHA_COMPRA) {
+        try {
+            // Insertamos los datos en la tabla
+            Statement stmt = conn.createStatement();
+            String sql = "INSERT INTO registros (ID_COMPRA, ID_PROVEEDOR, CONCEPTO_COMPRA, PRECIO_TOTAL, ID_PRODUCTO, ID_FACTURA, FECHA_COMPRA) " +
+                    "VALUES ('" + ID_COMPRA + "', '" + ID_PROVEEDOR + "', '" + CONCEPTO_COMPRA + "', '" + PRECIO_TOTAL + "', '" +
+                    ID_PRODUCTO + "', '" + ID_FACTURA + "', '" + FECHA_COMPRA + "')";
+            stmt.executeUpdate(sql);
+
+            JOptionPane.showMessageDialog(this, "Los datos se guardaron correctamente");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+        }
+    }
+ private void mostrarmenuventas(String opcion) {
+        // Creamos la ventana secundaria
+        JFrame moduloventas = new JFrame("Modulo de ventas");
+        moduloventas.setSize(600, 400);
+        moduloventas.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Creamos los componentes
+        JLabel label1 = new JLabel("ID VENTAS:");
+        JTextField textField1 = new JTextField(10);
+        JLabel label2 = new JLabel("ID CLIENTES:");
+        JTextField textField2 = new JTextField(10);
+        JLabel label3 = new JLabel("FECHA DE VENTA:");
+        JTextField textField3 = new JTextField(10);
+        JLabel label4 = new JLabel("ID COMPRA:");
+        JTextField textField4 = new JTextField(10);
+        JLabel label5 = new JLabel("ID PRODUCTO:");
+        JTextField textField5 = new JTextField(10);
+        JLabel label6 = new JLabel("MONTO TOTAL:");
+        JTextField textField6 = new JTextField(10);
+        JLabel label7 = new JLabel("ID FACTURA:");
+        JTextField textField7 = new JTextField(10);
+        JButton guardarButton = new JButton("Guardar");
+        guardarButton.addActionListener(e -> guardarDatos11(textField1.getText(), textField2.getText(),
+                textField3.getText(), textField4.getText(), textField5.getText(), textField6.getText(), textField7.getText()));
+        JButton volverButton = new JButton("Volver");
+        volverButton.addActionListener(e -> moduloventas.dispose());
+
+        // Creamos el panel y agregamos los componentes
+        JPanel panel = new JPanel();
+        panel.add(label1);
+        panel.add(textField1);
+        panel.add(label2);
+        panel.add(textField2);
+        panel.add(label3);
+        panel.add(textField3);
+        panel.add(label4);
+        panel.add(textField4);
+        panel.add(label5);
+        panel.add(textField5);
+        panel.add(label6);
+        panel.add(textField6);
+        panel.add(label7);
+        panel.add(textField7);
+        panel.add(guardarButton);
+        panel.add(volverButton);
+        moduloventas.add(panel);
+
+        // Mostramos la ventana
+        moduloventas.setVisible(true);
+    }
+
+    private void guardarDatos11(String ID_VENTAS, String ID_CLIENTES, String FECHA_VENTA, String ID_COMPRAS, String ID_PRODUCTO, String MONTO_TOTAL, String ID_FACTURA){
+        try {
+            // Insertamos los datos en la tabla
+            Statement stmt = conn.createStatement();
+            String sql = "INSERT INTO ventas (ID_VENTAS, ID_CLIENTES, FECHA_VENTA, ID_COMPRAS, ID_PRODUCTO, MONTO_TOTAL, ID FACTURA) " +
+                    "VALUES ('" + ID_VENTAS + "', '" + ID_CLIENTES + "', '" + FECHA_VENTA + "', '" + ID_COMPRAS + "', '" +
+                    ID_PRODUCTO + "', '" + MONTO_TOTAL + "', '" + ID_FACTURA + "')";
+            stmt.executeUpdate(sql);
+
+            JOptionPane.showMessageDialog(this, "Los datos se guardaron correctamente");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+        }
+    }
+ private void mostrarMenuestudiantes(String opcion) {
+        // Creamos la ventana secundaria
+        JFrame moduloestudiantes = new JFrame("Modulo de Estudiantes");
+        moduloestudiantes.setSize(600, 400);
+        moduloestudiantes.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Creamos los componentes
+        JLabel label1 = new JLabel("ID ALUMNO:");
+        JTextField textField1 = new JTextField(10);
+        JLabel label2 = new JLabel("NOMBRE ALUMNO:");
+        JTextField textField2 = new JTextField(10);
+        JLabel label3 = new JLabel("APELLIDO PATERNO:");
+        JTextField textField3 = new JTextField(10);
+        JLabel label4 = new JLabel("APELLIDO MATERNO:");
+        JTextField textField4 = new JTextField(10);
+        JLabel label5 = new JLabel("FECHA DE NACIMIENTO:");
+        JTextField textField5 = new JTextField(10);
+        JLabel label6 = new JLabel("MATERIA:");
+        JTextField textField6 = new JTextField(10);
+        JLabel label7 = new JLabel("PAGO COLEGIATURA:");
+        JTextField textField7 = new JTextField(10);
+        JButton guardarButton = new JButton("Guardar");
+        guardarButton.addActionListener(e -> guardarDatos21(textField1.getText(), textField2.getText(),
+                textField3.getText(), textField4.getText(), textField5.getText(), textField6.getText(), textField7.getText()));
+        JButton volverButton = new JButton("Volver");
+        volverButton.addActionListener(e -> moduloestudiantes.dispose());
+
+        // Creamos el panel y agregamos los componentes
+        JPanel panel = new JPanel();
+        panel.add(label1);
+        panel.add(textField1);
+        panel.add(label2);
+        panel.add(textField2);
+        panel.add(label3);
+        panel.add(textField3);
+        panel.add(label4);
+        panel.add(textField4);
+        panel.add(label5);
+        panel.add(textField5);
+        panel.add(label6);
+        panel.add(textField6);
+        panel.add(label7);
+        panel.add(textField7);
+        panel.add(guardarButton);
+        panel.add(volverButton);
+        moduloestudiantes.add(panel);
+
+        // Mostramos la ventana
+        moduloestudiantes.setVisible(true);
+    }
+
+    private void guardarDatos21(String ID_ALUMNO, String NOMBRE_ALUMNO, String APELLIDO_PATERNO, String APELLIDO_MATERNO, String FECHA_NACIMIENTO, String MATERIA, String PAGO_COLEGIATURA) {
+        try {
+            // Insertamos los datos en la tabla
+            Statement stmt = conn.createStatement();
+            String sql = "INSERT INTO estudiantes (ID_ALUMNO, NOMBRE_ALUMNO, APELLIDO_PATERNO, APELLIDO_MATERNO, FECHA_NACIMIENTO, MATERIA, PAGO_COLEGIATURA) " +
+                    "VALUES ('" + ID_ALUMNO + "', '" + NOMBRE_ALUMNO + "', '" + APELLIDO_PATERNO + "', '" + APELLIDO_MATERNO + "', '" +
+                    FECHA_NACIMIENTO + "', '" + MATERIA + "', '" + PAGO_COLEGIATURA + "')";
+            stmt.executeUpdate(sql);
+
+            JOptionPane.showMessageDialog(this, "Los datos se guardaron correctamente");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+        }
+    }
+ private void mostrarMenuproductos(String opcion) {
+        // Creamos la ventana secundaria
+        JFrame moduloproductos= new JFrame("Modulo de productos");
+        moduloproductos.setSize(600, 400);
+        moduloproductos.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Creamos los componentes
+        JLabel label1 = new JLabel("ID PRODUCTO:");
+        JTextField textField1 = new JTextField(10);
+        JLabel label2 = new JLabel("PRODUCTO:");
+        JTextField textField2 = new JTextField(10);
+        JLabel label3 = new JLabel("EXISTENCIA:");
+        JTextField textField3 = new JTextField(10);
+        JLabel label4 = new JLabel("FECHA COMPRA:");
+        JTextField textField4 = new JTextField(10);
+        JLabel label5 = new JLabel("FECHA VENTA:");
+        JTextField textField5 = new JTextField(10);
+        JButton guardarButton = new JButton("Guardar");
+        guardarButton.addActionListener(e -> guardarDatos3(textField1.getText(), textField2.getText(),
+                textField3.getText(), textField4.getText(), textField5.getText()));
+        JButton volverButton = new JButton("Volver");
+        volverButton.addActionListener(e -> moduloproductos.dispose());
+
+        // Creamos el panel y agregamos los componentes
+        JPanel panel = new JPanel();
+        panel.add(label1);
+        panel.add(textField1);
+        panel.add(label2);
+        panel.add(textField2);
+        panel.add(label3);
+        panel.add(textField3);
+        panel.add(label4);
+        panel.add(textField4);
+        panel.add(label5);
+        panel.add(textField5);
+
+        panel.add(guardarButton);
+        panel.add(volverButton);
+        moduloproductos.add(panel);
+
+        // Mostramos la ventana
+        moduloproductos.setVisible(true);
+    }
+
+    private void guardarDatos3(String ID_PRODUCTO, String PRODUCTO, String EXISTENCIA, String FECHA_COMPRA, String FECHA_VENTA) {
+        try {
+            // Insertamos los datos en la tabla
+            Statement stmt = conn.createStatement();
+            String sql = "INSERT INTO productos (ID_PRODUCTO, PRODUCTO, EXISTENCIA, FECHA_COMPRA, FECHA_VENTA) " +
+                    "VALUES ('" + ID_PRODUCTO + "', '" + PRODUCTO + "', '" + EXISTENCIA + "', '" + FECHA_COMPRA + "', '" +
+                    FECHA_VENTA + "')";
+            stmt.executeUpdate(sql);
+
+            JOptionPane.showMessageDialog(this, "Los datos se guardaron correctamente");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+        }
+    }
+ private void mostrarMenuproveedores(String opcion) {
+        // Creamos la ventana secundaria
+        JFrame moduloproveedores = new JFrame("Modulo de Proveedores");
+        moduloproveedores.setSize(600, 400);
+        moduloproveedores.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Creamos los componentes
+        JLabel label1 = new JLabel("ID PROVEEDORES:");
+        JTextField textField1 = new JTextField(10);
+        JLabel label2 = new JLabel("ID FACTURA:");
+        JTextField textField2 = new JTextField(10);
+        JLabel label3 = new JLabel("NOMBRE DEL PROVEEDOR:");
+        JTextField textField3 = new JTextField(10);
+        JLabel label4 = new JLabel("ID PRODUCTO:");
+        JTextField textField4 = new JTextField(10);
+        JLabel label5 = new JLabel("COMPAÑIA:");
+        JTextField textField5 = new JTextField(10);
+        JLabel label6 = new JLabel("MONTO TOTAL:");
+        JTextField textField6 = new JTextField(10);
+        JLabel label7 = new JLabel("SUPERVISOR:");
+        JTextField textField7 = new JTextField(10);
+        JButton guardarButton = new JButton("Guardar");
+        guardarButton.addActionListener(e -> guardarDatos4(textField1.getText(), textField2.getText(),
+                textField3.getText(), textField4.getText(), textField5.getText(), textField6.getText(), textField7.getText()));
+        JButton volverButton = new JButton("Volver");
+        volverButton.addActionListener(e -> moduloproveedores.dispose());
+
+        // Creamos el panel y agregamos los componentes
+        JPanel panel = new JPanel();
+        panel.add(label1);
+        panel.add(textField1);
+        panel.add(label2);
+        panel.add(textField2);
+        panel.add(label3);
+        panel.add(textField3);
+        panel.add(label4);
+        panel.add(textField4);
+        panel.add(label5);
+        panel.add(textField5);
+        panel.add(label6);
+        panel.add(textField6);
+        panel.add(label7);
+        panel.add(textField7);
+        panel.add(guardarButton);
+        panel.add(volverButton);
+        moduloproveedores.add(panel);
+
+        // Mostramos la ventana
+        moduloproveedores.setVisible(true);
+    }
+
+    private void guardarDatos4(String ID_PROVEEDOR, String ID_FACTURA, String NOMBRE_PROVEEDOR, String ID_PRODUCTO, String COMPAÑIA, String MONTO_TOTAL, String SUPERVISOR) {
+        try {
+            // Insertamos los datos en la tabla
+            Statement stmt = conn.createStatement();
+            String sql = "INSERT INTO proveedores (ID_PROVEEDOR, ID_FACTURA, NOMBRE_PROVEEDOR, ID_PRODUCTO, COMPAÑIA, MONTO_TOTAL, SUPERVISOR) " +
+                    "VALUES ('" + ID_PROVEEDOR + "', '" + ID_FACTURA + "', '" + NOMBRE_PROVEEDOR + "', '" + ID_PRODUCTO + "', '" +
+                    COMPAÑIA + "', '" + MONTO_TOTAL + "', '" + SUPERVISOR + "')";
+            stmt.executeUpdate(sql);
+
+            JOptionPane.showMessageDialog(this, "Los datos se guardaron correctamente");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+        }
+    }
+ private void mostrarMenuinventario(String opcion) {
+        // Creamos la ventana secundaria
+        JFrame moduloinventario = new JFrame("Modulo de Inventario");
+        moduloinventario.setSize(600, 400);
+        moduloinventario.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Creamos los componentes
+        JLabel label1 = new JLabel("ID INVENTARIO:");
+        JTextField textField1 = new JTextField(10);
+        JLabel label2 = new JLabel("ID PRODUCTO:");
+        JTextField textField2 = new JTextField(10);
+        JLabel label3 = new JLabel("FECHA DE INVENTARIO:");
+        JTextField textField3 = new JTextField(10);
+        JLabel label4 = new JLabel("FECHA COMPRA:");
+        JTextField textField4 = new JTextField(10);
+        JLabel label5 = new JLabel("FECHA VENTA:");
+        JTextField textField5 = new JTextField(10);
+        JLabel label6 = new JLabel("EXISTENCIA:");
+        JTextField textField6 = new JTextField(10);
+        JLabel label7 = new JLabel("STOCK MAXIMO:");
+        JTextField textField7 = new JTextField(10);
+        JLabel label8 = new JLabel("STOCK MINIMO:");
+        JTextField textField8 = new JTextField(10);
+        JButton guardarButton = new JButton("Guardar");
+        guardarButton.addActionListener(e -> guardarDatos5(textField1.getText(), textField2.getText(),
+                textField3.getText(), textField4.getText(), textField5.getText(), textField6.getText(), textField7.getText(), textField8.getText()));
+        JButton volverButton = new JButton("Volver");
+        volverButton.addActionListener(e -> moduloinventario.dispose());
+
+        // Creamos el panel y agregamos los componentes
+        JPanel panel = new JPanel();
+        panel.add(label1);
+        panel.add(textField1);
+        panel.add(label2);
+        panel.add(textField2);
+        panel.add(label3);
+        panel.add(textField3);
+        panel.add(label4);
+        panel.add(textField4);
+        panel.add(label5);
+        panel.add(textField5);
+        panel.add(label6);
+        panel.add(textField6);
+        panel.add(label7);
+        panel.add(textField7);
+        panel.add(label8);
+        panel.add(textField8);
+        panel.add(guardarButton);
+        panel.add(volverButton);
+        moduloinventario.add(panel);
+
+        // Mostramos la ventana
+        moduloinventario.setVisible(true);
+    }
+
+    private void guardarDatos5(String ID_INVENTARIO, String ID_PRODUCTO, String FECHA_INVENTARIO, String FECHA_COMPRA, String FECHA_VENTA, String EXISTENCIA, String STOCK_MAXIMO, String STOCK_MINIMO) {
+        try {
+            // Insertamos los datos en la tabla
+            Statement stmt = conn.createStatement();
+            String sql = "INSERT INTO inventario (ID_INVENTARIO, ID_PRODUCTO, FECHA_INVENTARIO, FECHA_COMPRA, FECHA_VENTA, EXISTENCIA, STOCK_MAXIMO, STOCK_MINIMO) " +
+                    "VALUES ('" + ID_INVENTARIO + "', '" + ID_PRODUCTO + "', '" + FECHA_INVENTARIO + "', '" + FECHA_COMPRA + "', '" +
+                    FECHA_VENTA + "', '" + EXISTENCIA + "', '" + STOCK_MAXIMO + "', '" + STOCK_MINIMO + "')";
+            stmt.executeUpdate(sql);
+
+            JOptionPane.showMessageDialog(this, "Los datos se guardaron correctamente");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+        }
+    }
+private void mostrarMenucontabilidad(String opcion) {
+        // Creamos la ventana secundaria
+        JFrame modulocontabilidad = new JFrame("Modulo de Contabilidad");
+        modulocontabilidad.setSize(600, 400);
+        modulocontabilidad.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Creamos los componentes
+        JLabel label1 = new JLabel("ID CONTABLE:");
+        JTextField textField1 = new JTextField(10);
+        JLabel label2 = new JLabel("RAZON SOCIAL:");
+        JTextField textField2 = new JTextField(10);
+        JLabel label3 = new JLabel("ID FACTURA:");
+        JTextField textField3 = new JTextField(10);
+        JLabel label4 = new JLabel("CONCEPTO:");
+        JTextField textField4 = new JTextField(10);
+        JLabel label5 = new JLabel("TOTAL IMPUESTO:");
+        JTextField textField5 = new JTextField(10);
+        JLabel label6 = new JLabel("PRECIO ISR:");
+        JTextField textField6 = new JTextField(10);
+        JLabel label7 = new JLabel("PRECIO IVA:");
+        JTextField textField7 = new JTextField(10);
+        JLabel label8 = new JLabel("MONTO TOTAL:");
+        JTextField textField8 = new JTextField(10);
+        JButton guardarButton = new JButton("Guardar");
+        guardarButton.addActionListener(e -> guardarDatos6(textField1.getText(), textField2.getText(),
+                textField3.getText(), textField4.getText(), textField5.getText(), textField6.getText(), textField7.getText(), textField7.getText()));
+        JButton volverButton = new JButton("Volver");
+        volverButton.addActionListener(e -> modulocontabilidad.dispose());
+
+        // Creamos el panel y agregamos los componentes
+        JPanel panel = new JPanel();
+        panel.add(label1);
+        panel.add(textField1);
+        panel.add(label2);
+        panel.add(textField2);
+        panel.add(label3);
+        panel.add(textField3);
+        panel.add(label4);
+        panel.add(textField4);
+        panel.add(label5);
+        panel.add(textField5);
+        panel.add(label6);
+        panel.add(textField6);
+        panel.add(label7);
+        panel.add(textField7);
+        panel.add(guardarButton);
+        panel.add(volverButton);
+        modulocontabilidad.add(panel);
+
+        // Mostramos la ventana
+        modulocontabilidad.setVisible(true);
+    }
+
+    private void guardarDatos6(String ID_CONTABLE, String RAZON_SOCIAL, String ID_FACTURA, String CONCEPTO, String TOTAL_IMPUESTO, String PRECIO_ISR, String PRECIO_IVA, String MONTO_TOTAL) {
+        try {
+            // Insertamos los datos en la tabla
+            Statement stmt = conn.createStatement();
+            String sql = "INSERT INTO contabilidad (ID_CONTABLE, RAZON_SOCIAL, ID_FACTURA, CONCEPTO, TOTAL_IMPUESTO, PRECIO_ISR, PRECIO_IVA, MONTO_TOTAL) " +
+                    "VALUES ('" + ID_CONTABLE + "', '" + RAZON_SOCIAL + "', '" + ID_FACTURA + "', '" + CONCEPTO + "', '" +
+                    TOTAL_IMPUESTO + "', '" + PRECIO_ISR + "', '" + PRECIO_IVA + "', '" + MONTO_TOTAL + "')";
+            stmt.executeUpdate(sql);
+
+            JOptionPane.showMessageDialog(this, "Los datos se guardaron correctamente");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+        }
+    }
+private void mostrarMenufactura(String opcion) {
+        // Creamos la ventana secundaria
+        JFrame modulofactura = new JFrame("Modulo de Facturación");
+        modulofactura.setSize(600, 400);
+        modulofactura.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        // Creamos los componentes
+        JLabel label1 = new JLabel("ID FACTURA:");
+        JTextField textField1 = new JTextField(10);
+        JLabel label2 = new JLabel("ID MONTO TOTAL:");
+        JTextField textField2 = new JTextField(10);
+        JButton guardarButton = new JButton("Guardar");
+        guardarButton.addActionListener(e -> guardarDatos1(textField1.getText(), textField2.getText()));
+        JButton volverButton = new JButton("Volver");
+        volverButton.addActionListener(e -> modulofactura.dispose());
+
+        // Creamos el panel y agregamos los componentes
+        JPanel panel = new JPanel();
+        panel.add(label1);
+        panel.add(textField1);
+        panel.add(label2);
+        panel.add(textField2);
+        panel.add(guardarButton);
+        panel.add(volverButton);
+        modulofactura.add(panel);
+
+        // Mostramos la ventana
+        modulofactura.setVisible(true);
+    }
+
+    private void guardarDatos1(String ID_FACTURA, String MONTO_TOTAL) {
+        try {
+            // Insertamos los datos en la tabla
+            Statement stmt = conn.createStatement();
+            String sql = "INSERT INTO facturacion (ID_FACTURA, MONTO_TOTAL) " +
+                    "VALUES ('" + ID_FACTURA + "', '" + MONTO_TOTAL + "')";
+            stmt.executeUpdate(sql);
+
+            JOptionPane.showMessageDialog(this, "Los datos se guardaron correctamente");
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar los datos: " + ex.getMessage());
+        }
+    }
+
+
+    public static void main(String[] args) {
+        new Prueba();
+    }    }
